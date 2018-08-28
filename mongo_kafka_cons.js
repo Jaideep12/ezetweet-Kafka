@@ -16,6 +16,7 @@
 );
 
 //Executing linux command in node.js
+
 var flag;
 
 //Exceuting unix command for navigating into the particular directory
@@ -106,10 +107,12 @@ for(m in array5)
 consumer.on('message', function (message) {
 	if(message.offset!=0)
 	{
-	      var buf = new Buffer(message.value, "binary"); 
+        console.log();
+        console.log(message.value);
+	      /*var buf = new Buffer(message.value, "binary"); 
         var decodedMessage = JSON.parse(buf.toString()); 
 	      console.log(decodedMessage);
-	      console.log("-------------------------------------------------------------------------");
+	      console.log("-------------------------------------------------------------------------");*/
 	      consumer.close();
 	 }
 });
