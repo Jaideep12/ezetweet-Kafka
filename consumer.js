@@ -11,7 +11,6 @@
         {
             autoCommit: false,
             fetchMaxBytes: 1024 * 1024
-            //encoding:"buffer"
         }
 );
 
@@ -20,7 +19,7 @@ var flag;
 
 //Exceuting unix command for navigating into the particular directory
 var exec=require("child_process").exec;
-exec("cd /opt/confluent-kafka/confluent-5.0.0/etc/kafka",function(err,stdout)
+exec("cd /home/jaideep/confluent-oss-5.0.0-2.11/confluent-5.0.0/etc/kafka",function(err,stdout)
 {
   if(err)
     throw err;
@@ -28,13 +27,15 @@ exec("cd /opt/confluent-kafka/confluent-5.0.0/etc/kafka",function(err,stdout)
   {
     flag=0;  
     console.log("Finished executing first");
+    console.log("Value of flag = "+flag);
   }
 })
 
 //Executing unix command for getting the list of all kafka topics from the zookeeper
 if(flag==0)
 {
-exec("/opt/confluent-kafka/confluent-5.0.0/bin/kafka-topics --zookeeper server:2181 -list > output.txt",function(err,stdout)
+   console.log("Entering the second statement");
+exec("/home/jaideep/confluent-oss-5.0.0-2.11/confluent-5.0.0/bin/kafka-topics --zookeeper localhost:2181 -list > output.txt",function(err,stdout)
 {
   if(err)
     throw err;
@@ -48,7 +49,8 @@ exec("/opt/confluent-kafka/confluent-5.0.0/bin/kafka-topics --zookeeper server:2
 
 fs.readFile('topic_config','utf8', function (err, data2) {
   if (err) throw err;
-
+  
+  var topic_list=[];
   var array_config=data2.split(',');
   var i,k,j=0;
 
@@ -59,9 +61,8 @@ fs.readFile('topic_config','utf8', function (err, data2) {
     {
       if(array_filter[k].indexOf(array_config[i])>-1 || array_filter[k]==array_config[i])
       {
-        var topic_list=new Array();
-        topic_list[j]=array_filter[k]
-        //console.log("The topic found is="+topic_list[j]);
+        topic_list[j]=array_filter[k];
+        console.log("Topic = "+topic_list[j]);
         j++;
         break;
       }
@@ -92,7 +93,7 @@ for(i=0;i<len;i++)
       l++;
    }
 }
-
+console.log(array_output);
 //---------------------------------------------------------
 /*console.log("Array 5 is");
 console.log("Length of array 5 is ="+array5.length);
@@ -106,14 +107,14 @@ for(m in array5)
 consumer.on('message', function (message) {
 	if(message.offset!=0)
 	{
-	      var buf = new Buffer(message.value, "binary"); 
+        console.log(message.value);
+	      /*var buf = new Buffer(message.value, "binary"); 
         var decodedMessage = JSON.parse(buf.toString()); 
 	      console.log(decodedMessage);
-	      console.log("-------------------------------------------------------------------------");
+	      console.log("-------------------------------------------------------------------------");*/
 	      consumer.close();
 	 }
 });
-
 consumer.on('error', function (err) {
     console.log('Error:',err);
 })

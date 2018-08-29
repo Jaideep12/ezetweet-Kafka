@@ -10,8 +10,8 @@
     var consumer = new Consumer(client,[{topic:'Parent_data',partition:0}],
         {
             autoCommit: false,
-            fetchMaxBytes: 1024 * 1024
-            //encoding:"buffer"
+            fetchMaxBytes: 1024 * 1024,
+           // encoding:"buffer"
         }
 );
 
@@ -105,14 +105,12 @@ for(m in array5)
 
 //Displaying data read by kafka consumer on NODE console 
 consumer.on('message', function (message) {
-	if(message.offset!=0)
+	if(message.offset!=0 && message.value!=null)
 	{
-        console.log();
-        console.log(message.value);
-	      /*var buf = new Buffer(message.value, "binary"); 
+        var buf = new Buffer(JSON.stringify(message)); 
         var decodedMessage = JSON.parse(buf.toString()); 
-	      console.log(decodedMessage);
-	      console.log("-------------------------------------------------------------------------");*/
+        console.log(decodedMessage.value);
+        console.log("-------------------------------------------------------------------------");
 	      consumer.close();
 	 }
 });

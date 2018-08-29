@@ -67,10 +67,9 @@ MongoClient.connect("mongodb://172.52.90.34:27017/", function(err, db) {
 
 //----------------------------------------------------------------------
 //Finding an array of objects
-var array_id=[],i;
-var array_name=[];
-var counter =0,flag=0,counter2=0;
-
+var array_msg=[];
+var counter=0;
+var obj;
 MongoClient.connect("mongodb://172.52.90.34:27017/", function(err, db) {
   if(!err) {
 
@@ -78,46 +77,21 @@ MongoClient.connect("mongodb://172.52.90.34:27017/", function(err, db) {
 
     var dbo=db.db("TestServerSimpleTwitter");
 
-    var cursor = dbo.collection('events').find();
+    var cursor = dbo.collection('tweets').find();
 
     cursor.each(function(err, doc) {
         if(doc!=null)
         {
-          flag=0;
-          var sent=doc.parent_id;
-          var sent2=doc.parent_name;
-          var obj={event_id:sent,event_name:sent2};
-          if(counter==0 && sent!=undefined)
-          {
-             array_id[counter]=obj;
-             counter++;
-          }
-          else
-          {
-            if(sent!=undefined && sent2!=undefined)
-            {
-            for(i=0;i<counter;i++)
-            {
-              if(array_id[i].parent_id===sent)
-              {
-                  flag=1;
-                  break;
-              }
-            }
-            if(flag==0 && sent!=undefined && sent2!=undefined)
-            {
-              array_id[counter]=obj;
-              counter++;
-            }
-          }
+           obj=JSON.stringify(doc.details);
+           array_msg[counter]=obj;
+           counter++;
         }
-        }
-      });
-    }
+});
+  }
 });
 
           payloads = [
-             { topic:'Parent_data', messages:array_id, partition: 0 }
+             { topic:'Messages', messages:array_msg.toString('utf8'), partition: 0 }
           ];
 
          producer.on('ready',function(){
@@ -171,3 +145,4 @@ MongoClient.connect("mongodb://172.52.90.34:27017/", function(err, db) {
      // }   
 //}
 //});
+
