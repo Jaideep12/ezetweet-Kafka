@@ -3,14 +3,7 @@
 //After which tehe list is compared with another configuration file containing prefixes of data sources signifying which topics to consider
 
 
-        // var cassandra = require('cassandra-driver');
-       //var client3 = new cassandra.Client({contactPoints:['127.0.0.1'],keyspace: 'node' });
-
-       
-    var topic_list=[];
-
     var MongoClient = require('mongodb').MongoClient;
-
     var redis = require('redis');
     var client2 = redis.createClient();
     var assert=require('assert');
@@ -19,19 +12,15 @@
     var topics=[{topic:'Kafka_one'}];
     var Consumer = kafka.Consumer;
     var client = new kafka.Client();
-    var consumer = new Consumer(client,[{topic:'Ezest-Whiziblem-connect-MileStone',partition:0}],
-        {
-            autoCommit: false,
-            fetchMaxBytes: 1024 * 1024
-        }
+    var consumer = new Consumer(client,[{topic:"Ezest-Whiziblem-connect-MileStone"}],
+    {
+        autoCommit: false,
+        fetchMaxBytes: 1024 * 1024
+    }
 );
 
-//var topic_list=[];
-//Executing linux command in node.js
-
-var flag=1;
 var current_topic="Ezest-Whiziblem-connect-MileStone";
-
+var flag=1;
 //Exceuting unix command for navigating into the particular directory
 var exec=require("child_process").exec;
 exec("cd /home/jaideep/confluent-oss-5.0.0-2.11/confluent-5.0.0",function(err,stdout)
@@ -41,8 +30,6 @@ exec("cd /home/jaideep/confluent-oss-5.0.0-2.11/confluent-5.0.0",function(err,st
   else
   {
     flag=0;  
-    console.log("Finished executing first");
-    console.log("Value of flag = "+flag);
     get_list();
   }
 })
@@ -50,7 +37,6 @@ exec("cd /home/jaideep/confluent-oss-5.0.0-2.11/confluent-5.0.0",function(err,st
 //Executing unix command for getting the list of all kafka topics from the zookeeper
 function get_list()
 {
-   console.log("Entering the second statement");
    exec("/home/jaideep/confluent-oss-5.0.0-2.11/confluent-5.0.0/bin/kafka-topics --zookeeper localhost:2181 -list > /home/jaideep/myapp/output.txt",function(err,stdout)
  {
   if(err)
@@ -59,41 +45,9 @@ function get_list()
   console.log("Finished executing second");
   var array_output = fs.readFileSync('/home/jaideep/myapp/output.txt').toString().split("\n");
   console.log(stdout);
+
 })
 }
-
-//Reading data from a configuration file for finding topics from which data is to be read by kafka
-
-fs.readFile('topic_config','utf8', function (err, data2) {
-  if (err) throw err;
-  
-  var array_config=data2.split(',');
-  var i,k,j=0;
-
-//Searching for data from the configuration file and retrieving the relevant topics.
-  for(k=0;k<array_filter.length;k++)
-  {
-    for(i=0;i<array_config.length;i++)
-    {
-      if(array_filter[k].indexOf(array_config[i])>-1 || array_filter[k]==array_config[i])
-      {
-        topic_list[j]=array_filter[k];
-        console.log("Topic = "+topic_list[j]);
-        j++;
-        break;
-      }
-    }
-  }
-});
-
-//----------------------------------------------------
-//Formation of file for topics of kafka
-/*fs.readFile('output.txt','utf8',function(err,data3){
-  if(err)
-    throw err;
-});*/
-//------------------------------------------------------
-
 
 //Converting the file containing the list of all kafka topics into a list
 
@@ -109,21 +63,44 @@ for(i=0;i<len;i++)
       l++;
    }
 }
-//---------------------------------------------------------
-/*console.log("Array 5 is");
-console.log("Length of array 5 is ="+array5.length);
-for(m in array5)
+
+//Reading data from a configuration file for finding topics from which data is to be read by kafka
+var topic_list=[];
+var array_config = fs.readFileSync('topic_config').toString().split(",");
+console.log("Array = "+array_config[0]);
+var i,k,j=0;
+
+for(k=0;k<array_filter.length;k++)
+  {
+    for(i=0;i<array_config.length;i++)
+    {
+      if(array_filter[k].indexOf(array_config[i])>-1 || array_filter[k]==array_config[i])
+      {
+        topic_list[j]=array_filter[k];
+        j++;
+      }
+    }
+  }
+//--------------------------------------------------------------------------------------------------------------------------------
+var final_topics=[];
+var topic_counter=0;
+for(i=0;i<topic_list.length;i++)
 {
-  console.log(array5[m]);
-}*/
-//---------------------------------------------------------
+  var obj={};
+  obj["topic"]=topic_list[i];
+  obj["partition"]=0;
+  var obj2=JSON.stringify(obj);
+  final_topics[topic_counter]=obj2;
+  topic_counter++;
+}
+//--------------------------------------------------------------------------------------------------------------------------------
 
 //Displaying data read by kafka consumer on NODE console 
 consumer.on('message', function (message) {
 	if(message.offset!=0)
 	{
-        Message_formation(message.value);
-	 }
+      Message_formation(message.value);
+	}
 });
 
 function Message_formation(message)
@@ -149,11 +126,7 @@ function Message_formation(message)
         }
     }
     var msg=JSON.stringify(jsonParsed);
-
-    //send_to_cassandra(b);
     var final_msg=filter_templates(msg);
-    //console.log(final_msg);
-    //send_to_redis(b);
 
 }
 function filter_templates(message)
@@ -193,12 +166,12 @@ function filter_templates(message)
                         }
                     }
                     var msg=JSON.stringify(object); 
-                    console.log("MESSAGE = "+object);
-                    /*
+                    //console.log("MESSAGE = "+msg);
+                    
                     if(msg!=null)
                     {
                       send_to_redis(message,msg);
-                     }*/ 
+                    } 
                   }
                }
          });
@@ -211,15 +184,15 @@ function send_to_redis(message,msg)
 {
   var jsonParsed = JSON.parse(message);
   var id=jsonParsed.payload.ID;
-  var key=id.toString();
-  console.log(typeof(key));
+  var key="'"+id+"'";
   client2.on('connect', function() {
     console.log('connected');
   });
-  client2.sadd(['jjj',message,msg], function(err, reply) {
-    console.log(reply); // 3
+  client2.sadd([key,message,msg], function(err, reply) {
+    console.log(reply); 
 });
-  client2.smembers('jjj', function(err, reply) {
+  
+  client2.smembers(key, function(err, reply) {
     console.log(reply);
   });
 }
