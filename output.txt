@@ -1,3 +1,6 @@
+Ezest-Ascent-connect-LeaveApplication
+Ezest-Ascent-connect-ODApplication
+Ezest-Ascent-connect-PunchData
 Ezest-Whiziblem-connect-Customer
 Ezest-Whiziblem-connect-Employee
 Ezest-Whiziblem-connect-HelpDesk

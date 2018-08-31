@@ -5,11 +5,15 @@
 
         // var cassandra = require('cassandra-driver');
        //var client3 = new cassandra.Client({contactPoints:['127.0.0.1'],keyspace: 'node' });
-       var MongoClient = require('mongodb').MongoClient;
 
-        var redis = require('redis');
-        var client2 = redis.createClient();
-      var assert=require('assert');
+       
+    var topic_list=[];
+
+    var MongoClient = require('mongodb').MongoClient;
+
+    var redis = require('redis');
+    var client2 = redis.createClient();
+    var assert=require('assert');
     var kafka = require('kafka-node');
     var fs=require('fs');
     var topics=[{topic:'Kafka_one'}];
@@ -21,8 +25,10 @@
             fetchMaxBytes: 1024 * 1024
         }
 );
-  var topic_list=[];
+
+//var topic_list=[];
 //Executing linux command in node.js
+
 var flag=1;
 var current_topic="Ezest-Whiziblem-connect-MileStone";
 
@@ -116,13 +122,7 @@ for(m in array5)
 consumer.on('message', function (message) {
 	if(message.offset!=0)
 	{
-       // console.log(message.value);
         Message_formation(message.value);
-	      /*var buf = new Buffer(message.value, "binary"); 
-        var decodedMessage = JSON.parse(buf.toString()); 
-	      console.log(decodedMessage);
-	      console.log("-------------------------------------------------------------------------");*/
-	      //consumer.close();
 	 }
 });
 
@@ -130,41 +130,28 @@ function Message_formation(message)
 {
     var jsonParsed = JSON.parse(message);
     // access elements
-    var a=jsonParsed.payload.PlannedCompletionDate;
-    var x=jsonParsed.payload.ActualCompletionDate;
-    var y=jsonParsed.payload.CreatedDate;
-    var z=jsonParsed.payload.ModifiedOn;
-    var i=jsonParsed.payload.ActualStartDate;
-    var j=jsonParsed.payload.ActualEndDate;
-    var k=jsonParsed.payload.BaselineStart;
-    var l=jsonParsed.payload.BaselineEnd;
-    var date=new Date(a);
-    var date2=new Date(x);
-    var date3=new Date(y);
-    var date4=new Date(z);
-    var date5=new Date(i);
-    var date6=new Date(j);
-    var date7=new Date(k);
-    var date8=new Date(l);
-    a=date;
-    x=date2;
-    y=date3;
-    z=date4;
-    i=date5;
-    j=date6;
-    k=date7;
-    l=date8;
-    jsonParsed.payload.PlannedCompletionDate=a;
-    jsonParsed.payload.ActualCompletionDate=x;
-    jsonParsed.payload.CreatedDate=y;
-    jsonParsed.payload.ModifiedOn=z;
-     i=jsonParsed.payload.ActualStartDate=i;
-     j=jsonParsed.payload.ActualEndDate=j;
-     k=jsonParsed.payload.BaselineStart=k;
-     l=jsonParsed.payload.BaselineEnd=l;
-     b=JSON.stringify(jsonParsed);
+    var field=jsonParsed.schema.fields;
+    for(i=0;i<field.length;i++)
+    {
+        var name=field[i].name;
+        if(name!=undefined)
+        {
+          if(name.includes("Timestamp"))
+          {
+            var temp=field[i].field;
+            var val=jsonParsed.payload[temp];
+            if(val!=null)
+            {
+              var final_date=new Date(val);
+              jsonParsed.payload[temp]=final_date;
+            }
+          }
+        }
+    }
+    var msg=JSON.stringify(jsonParsed);
+
     //send_to_cassandra(b);
-    var final_msg=filter_templates(b);
+    var final_msg=filter_templates(msg);
     //console.log(final_msg);
     //send_to_redis(b);
 
@@ -195,21 +182,23 @@ function filter_templates(message)
                          template_array[counter_template++]=fields[i];
                        }        
                     }
-                    console.log("Message for this array");
                     var object={};
                     for(j=0;j<template_array.length;j=j+2)
                     {
                         var jsonParsed = JSON.parse(message);
                         var key = template_array[j];
-                        var value=jsonParsed.payload.a;
-                        //console.log("The value is = "+jsonParsed.payload[template_array[j]]);
                         if(typeof(jsonParsed.payload[template_array[j]])!='undefined' && typeof(jsonParsed.payload[template_array[j]])!='null')
                         {
                            object[key]=jsonParsed.payload[template_array[j]];
                         }
                     }
                     var msg=JSON.stringify(object); 
-                    console.log("The Message created is ="+msg);  
+                    console.log("MESSAGE = "+object);
+                    /*
+                    if(msg!=null)
+                    {
+                      send_to_redis(message,msg);
+                     }*/ 
                   }
                }
          });
@@ -218,23 +207,21 @@ function filter_templates(message)
 });
 }
 
-function send_to_redis(message)
+function send_to_redis(message,msg)
 {
   var jsonParsed = JSON.parse(message);
   var id=jsonParsed.payload.ID;
+  var key=id.toString();
+  console.log(typeof(key));
   client2.on('connect', function() {
     console.log('connected');
   });
-  if(id!=undefined)
-  {
-    client2.set(id,message, function(err, reply) {
+  client2.sadd(['jjj',message,msg], function(err, reply) {
+    console.log(reply); // 3
+});
+  client2.smembers('jjj', function(err, reply) {
     console.log(reply);
-    });
-
-    client2.get(id, function(err, reply) {
-    console.log(reply);
-    });
-  }
+  });
 }
 
 function send_to_cassandra(message)
