@@ -144,6 +144,12 @@ function filter_templates(message)
                {
                   if(current_topic.search(doc.parent_name))
                   {
+					if(doc.parent_name!=null && doc.parent_id!=null)
+					{
+					   var name=doc.event_parent_name;
+					   var id=doc.event_parent_id;
+					}
+				
                     var event_message=doc.event_message;
                     var fields=event_message.split('#');
                     var template_array=[];
@@ -170,7 +176,7 @@ function filter_templates(message)
                     
                     if(msg!=null)
                     {
-                      send_to_redis(message,msg);
+                      //send_to_mongo(msg,name,id);
                     } 
                   }
                }
@@ -180,31 +186,27 @@ function filter_templates(message)
 });
 }
 
-function send_to_redis(message,msg)
+function send_to_mongo(msg,name,id)
 {
-  var jsonParsed = JSON.parse(message);
-  var id=jsonParsed.payload.ID;
-  var key="'"+id+"'";
-  client2.on('connect', function() {
-    console.log('connected');
-  });
-  client2.sadd([key,message,msg], function(err, reply) {
-    console.log(reply); 
-});
-  
-  client2.smembers(key, function(err, reply) {
-    console.log(reply);
-  });
-}
-
-function send_to_cassandra(message)
-{
-  const query="INSERT INTO Messages(message) values("+"'"+message+"'"+")";
-  client3.execute(query, function(err, result) {
-  assert.ifError(err);
-  console.log('Data inserted into the cassandra database');
-});
-
+	var Tweet=mongoose.model('Tweets');
+	var tweet=new tweet({
+		'author':{
+			'eventId':id
+			'eventname':name
+		},
+		'message':msg
+	});
+	console.log("The tweet constructed is ="+tweet);
+     tweet.save(function(err){
+		 if(err)
+		 {
+			 console.log("There was a problem while solving the tweets");
+		 }
+		 else
+		 {
+			 console.log("Tweet saved successfully into the mongodb database");
+		 }
+	 });
 }
 
 consumer.on('error', function (err) {
